@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: mån mar 20, 2023  11:36
+- Last modified: mån mar 20, 2023  12:39
 - Sign: Johan Nylander
 
 ## Fastq filtering and Mapping
@@ -70,13 +70,13 @@ Run freebayes, followed by sorting the VCF
 
     $ cd /home/nylander/run/snv/freebayes
     $ freebayes \
-    --fasta-reference reference/ref.fasta \
-    --targets cov30.bed \
-    --bam-list bamlist.txt \
-    --ploidy 1 \
-    --gvcf \
-    --skip-coverage 700 \
-    --vcf freebayes_gvcf.vcfs
+        --fasta-reference reference/ref.fasta \
+        --targets cov30.bed \
+        --bam-list bamlist.txt \
+        --ploidy 1 \
+        --gvcf \
+        --skip-coverage 700 \
+        --vcf freebayes_gvcf.vcfs
 
     $ bcftools sort freebayes_gvcf.vcf -o freebayes_gvcf_sorted.vcf.gz -Oz
 
@@ -214,3 +214,20 @@ plot(snps_MAC1.pca,
 snpgdsClose(snps_MAC1.gds)
 
 ```
+
+Output
+
+---
+
+![Hierarchical clustering](img/clustering.png)
+
+---
+
+![PCA 1, 2](img/pca12.png)
+
+---
+
+![PCA all](img/pcaall.png)
+
+---
+
