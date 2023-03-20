@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: mån mar 20, 2023  12:39
+- Last modified: mån mar 20, 2023  12:42
 - Sign: Johan Nylander
 
 ## Fastq filtering and Mapping
@@ -215,7 +215,7 @@ snpgdsClose(snps_MAC1.gds)
 
 ```
 
-Output
+## Figures
 
 ---
 
@@ -230,4 +230,8 @@ Output
 ![PCA all](img/pcaall.png)
 
 ---
+
+## Ackowledgements
+
+Thanks to Jason Hill [NBIS.se](https://nbis.se/about/staff/jason-hill/) for advice on analyses.
 
