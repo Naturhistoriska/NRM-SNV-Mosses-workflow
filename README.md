@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: tis apr 25, 2023  03:34
+- Last modified: tis apr 25, 2023  03:52
 - Sign: Johan Nylander
 
 ## Workflow repository
@@ -13,23 +13,24 @@ All analyses was run on the Linux operating system (Ubuntu 20.04, bash v.5.0.17)
 
 Specific software used (with versions):
 
-- R 4.3.0
-- R library SNPRelate
-- R library ape 5.7
-- R library gdsfmt
-- R library ggtree
-- R library tidyverse 2.0.0
-- bcftools 1.10.2
-- bwa 0.7.17
-- freebayes 1.3.6
-- nextflow 23.04.0
-- nf-core 2.7.2
-- samtools 1.10
-- vcftools 0.1.16
+- `R` 4.3.0
+- R library `SNPRelate`
+- R library `ape` 5.7
+- R library `gdsfmt`
+- R library `ggtree`
+- R library `tidyverse` 2.0.0
+- `bcftools` 1.10.2
+- `bwa` 0.7.17
+- `freebayes` 1.3.6
+- `nextflow` 23.04.0
+- `nf-core` 2.7.2
+- `samtools` 1.10
+- `vcftools` 0.1.16
 
 ## Data backup
 
-Data delivery from NGI is currently deposited at
+Data delivery from [NGI](https://www.scilifelab.se/units/ngi/) is currently
+deposited (non-public) at
 `nrmdna01.nrm.se:/projects/BOT-projects/larshede/ngisthlm00062`.
 
 ## Fastq filtering and Mapping
@@ -119,11 +120,11 @@ Run freebayes, followed by sorting the VCF
 ## Filter VCF (Jason Hill)
 
 The VCF file derived from the Freebayes join variant calling run contained
-4039951 variant sites. Inspection showed that a near majority of these sites
-were bizare looking indels, however most of these had an allele frequency of 0
-so they must have been included by freebayes for some reason even though none
-of the samples carried the variant indel. Some basic filtering of the VCF
-produced a more reasonable set.
+4,039,951 variant sites. Inspection showed that a near majority of these sites
+were indels, however most of these had an allele frequency of 0 so they must
+have been included by freebayes for some reason even though none of the samples
+carried the variant indel. Some basic filtering of the VCF produced a more
+reasonable set.
 
     $ vcftools --gzvcf freebayes_gvcf_sorted.vcf.gz \
       --minDP 20 --minQ 20 --recode-INFO-all --out filtered_GQ20_DP20
@@ -134,22 +135,22 @@ since only sites with depth > 30 were supplied anyway.
     $ vcftools --vcf filtered_GQ20_DP20.vcf --remove-indels \
       --recode --recode-INFO-all --out output_snps-only.vcf
 
-How many SNPs? After filtering, kept 797981 out of a possible 1501403 Sites
+How many SNPs? After filtering, kept 797,981 out of a possible 1,501,403 Sites
 
     $ vcftools --vcf filtered_GQ20_DP20.vcf --keep-only-indels \
       --recode --recode-INFO-all --out output_indels-only.vcf
 
-How many indels? After filtering, kept 703422 out of a possible 1501403 Sites
+How many indels? After filtering, kept 703,422 out of a possible 1,501,403 Sites
 
     $ vcftools --vcf filtered_GQ20_DP20.vcf --recode \
       --recode-INFO-all --mac 1 --out output_all.MAC1.vcf
 
 We'll use both SNPs and indels for now, but require that at least one sample
-actually has the alternate allele.After filtering, kept 398100 out of a
-possible 1501403 Sites. There was a very large reduction in the number of
+actually has the alternate allele. After filtering, kept 398,100 out of a
+possible 1,501,403 Sites. There was a very large reduction in the number of
 variant sites, but those that remain look much more reasonable. This averages
-out to one variant every 550bp, which seems somewhat low? We’ll use this file
-going forward
+out to one variant every 550bp, which seems somewhat low(?). We’ll use this file
+going forward.
 
 ## Clustering of samples and search for structure (Jason Hill)
 
@@ -187,7 +188,7 @@ Infile `sample-population.tsv`:
     P27213_129_S81_L002	popC
     P27213_130_S82_L002	popC
 
-Commands in R
+Commands in R (see script [scripts/analysis.R](scripts/analysis.R))
 
 ```R
 
