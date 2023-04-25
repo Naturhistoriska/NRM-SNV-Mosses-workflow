@@ -1,24 +1,57 @@
 # NRM SNV Mosses workflow
 
-- Last modified: mån mar 20, 2023  12:42
+- Last modified: tis apr 25, 2023  03:34
 - Sign: Johan Nylander
+
+## Workflow repository
+
+<https://github.com/Naturhistoriska/NRM-SNV-Mosses-workflow>
+
+## Software requirements
+
+All analyses was run on the Linux operating system (Ubuntu 20.04, bash v.5.0.17).
+
+Specific software used (with versions):
+
+- R 4.3.0
+- R library SNPRelate
+- R library ape 5.7
+- R library gdsfmt
+- R library ggtree
+- R library tidyverse 2.0.0
+- bcftools 1.10.2
+- bwa 0.7.17
+- freebayes 1.3.6
+- nextflow 23.04.0
+- nf-core 2.7.2
+- samtools 1.10
+- vcftools 0.1.16
+
+## Data backup
+
+Data delivery from NGI is currently deposited at
+`nrmdna01.nrm.se:/projects/BOT-projects/larshede/ngisthlm00062`.
 
 ## Fastq filtering and Mapping
 
 Set up directories
 
-    $ mkdir -p /home/nylander/run/snv/eager/{data,reference}
-    $ cd /home/nylander/run/snv/eager
+    $ mkdir -p /home/$USER/run/snv/eager/{data,reference}
+    $ cd /home/$USER/run/snv/eager
 
-Reference (genome)
+Reference (genome) from
+<https://www.ncbi.nlm.nih.gov/data-hub/genome/GCA_006891605.1/>
 
-    $ cp /path/to/reference/genome /home/nylander/run/snv/eager/reference/ref.fasta
+    $ wget -O ref.fasta.gz \ 
+      "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/006/891/605/GCA_006891605.1_SU_Pschr_1.0/GCA_006891605.1_SU_Pschr_1.0_genomic.fna.gz"
+    $ gunzip ref.fasta.gz
+    $ samtools faidx ref.fasta
 
 Input data as fastq.gz files
 
-    $ cd /home/nylander/run/snv/eager/data
-    $ find /home/nylander/run/snv/data/P27213 -name '*_001.fastq.gz' -exec ln -s {} . \;
-    $ cd /home/nylander/run/snv/eager
+    $ cd /home/$USER/run/snv/eager/data
+    $ find /home/$USER/run/snv/data/P27213 -name '*_001.fastq.gz' -exec ln -s {} . \;
+    $ cd /home/$USER/run/snv/eager
 
 Eager parameters (different from default) in file `nf-params.json`:
 
@@ -30,19 +63,19 @@ Eager parameters (different from default) in file `nf-params.json`:
         "skip_damage_calculation": true,
         "mergedonly": true,
         "mapper": "bwamem",
-        "run_genotyping": true,
-        "genotyping_tool": "freebayes",
-        "freebayes_p": 1
     }
 
 Start eager pipeline
 
     $ screen -S eager
-    $ cd /home/nylander/run/snv/eager
+    $ cd /home/$USER/run/snv/eager
+    $ mkdir -p /home/$USER/run/snv/eager/singularity
+    $ export NXF_SINGULARITY_CACHEDIR=/home/$USER/run/snv/eager/singularity
+    $ nf-core download eager -r 2.4.6 -c singularity -p 10 -x none
     $ nextflow run nf-core-eager-2.4.6/workflow \
-      -name run_2 \
-      -profile singularity \
-      -params-file nf-params.json
+        -name run_2 \
+        -profile singularity \
+        -params-file nf-params.json
 
 Clean up
 
@@ -55,20 +88,21 @@ Clean up
 
 Set up directories
 
-    $ mkdir -p /home/nylander/run/snv/freebayes/reference
+    $ mkdir -p /home/$USER/run/snv/freebayes/reference
 
 Reference
 
-    $ ln -s /home/nylander/run/snv/eager/reference/ref.fasta /home/nylander/run/snv/freebayes/reference/ref.fasta
+    $ ln -s /home/$USER/run/snv/eager/reference/ref.fasta \
+      /home/$USER/run/snv/freebayes/reference/ref.fasta
 
 List of bam files (should have indexes)
 
-    $ cd /home/nylander/run/snv/freebayes
-    $ find /home/nylander/run/snv/eager/results -name '*_rmdup.bam' > bam.list
+    $ cd /home/$USER/run/snv/freebayes
+    $ find /home/$USER/run/snv/eager/results -name '*_rmdup.bam' > bam.list
 
 Run freebayes, followed by sorting the VCF
 
-    $ cd /home/nylander/run/snv/freebayes
+    $ cd /home/$USER/run/snv/freebayes
     $ freebayes \
         --fasta-reference reference/ref.fasta \
         --targets cov30.bed \
@@ -84,23 +118,38 @@ Run freebayes, followed by sorting the VCF
 
 ## Filter VCF (Jason Hill)
 
-The VCF file derived from the Freebayes join variant calling run contained 4039951 variant sites. Inspection showed that a near majority of these sites were bizare looking indels, however most of these had an allele frequency of 0 so they must have been included by freebayes for some reason even though none of the samples carried the variant indel. Some basic filtering of the VCF produced a more reasonable set.
+The VCF file derived from the Freebayes join variant calling run contained
+4039951 variant sites. Inspection showed that a near majority of these sites
+were bizare looking indels, however most of these had an allele frequency of 0
+so they must have been included by freebayes for some reason even though none
+of the samples carried the variant indel. Some basic filtering of the VCF
+produced a more reasonable set.
 
-    $ vcftools --gzvcf freebayes_gvcf_sorted.vcf.gz --minDP 20 --minQ 20 --recode-INFO-all --out filtered_GQ20_DP20
+    $ vcftools --gzvcf freebayes_gvcf_sorted.vcf.gz \
+      --minDP 20 --minQ 20 --recode-INFO-all --out filtered_GQ20_DP20
 
-Require genotype quality > 20 and depth > 20. The depth filter was redundant since only sites with depth > 30 were supplied anyway.
+Require genotype quality > 20 and depth > 20. The depth filter was redundant
+since only sites with depth > 30 were supplied anyway.
 
-    $ vcftools --vcf filtered_GQ20_DP20.vcf --remove-indels --recode --recode-INFO-all --out output_snps-only.vcf
+    $ vcftools --vcf filtered_GQ20_DP20.vcf --remove-indels \
+      --recode --recode-INFO-all --out output_snps-only.vcf
 
 How many SNPs? After filtering, kept 797981 out of a possible 1501403 Sites
 
-    $ vcftools --vcf filtered_GQ20_DP20.vcf --keep-only-indels --recode --recode-INFO-all --out output_indels-only.vcf
+    $ vcftools --vcf filtered_GQ20_DP20.vcf --keep-only-indels \
+      --recode --recode-INFO-all --out output_indels-only.vcf
 
 How many indels? After filtering, kept 703422 out of a possible 1501403 Sites
 
-    $ vcftools --vcf filtered_GQ20_DP20.vcf --recode --recode-INFO-all --mac 1 --out output_all.MAC1.vcf
+    $ vcftools --vcf filtered_GQ20_DP20.vcf --recode \
+      --recode-INFO-all --mac 1 --out output_all.MAC1.vcf
 
-We'll use both SNPs and indels for now, but require that at least one sample actually has the alternate allele.After filtering, kept 398100 out of a possible 1501403 Sites. There was a very large reduction in the number of variant sites, but those that remain look much more reasonable. This averages out to one variant every 550bp, which seems somewhat low? We’ll use this file going forward
+We'll use both SNPs and indels for now, but require that at least one sample
+actually has the alternate allele.After filtering, kept 398100 out of a
+possible 1501403 Sites. There was a very large reduction in the number of
+variant sites, but those that remain look much more reasonable. This averages
+out to one variant every 550bp, which seems somewhat low? We’ll use this file
+going forward
 
 ## Clustering of samples and search for structure (Jason Hill)
 
@@ -233,5 +282,6 @@ snpgdsClose(snps_MAC1.gds)
 
 ## Ackowledgements
 
-Thanks to Jason Hill [NBIS.se](https://nbis.se/about/staff/jason-hill/) for advice on analyses.
+Thanks to Jason Hill [NBIS.se](https://nbis.se/about/staff/jason-hill/) for
+advice on analyses.
 
