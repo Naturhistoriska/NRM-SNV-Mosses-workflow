@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: tis apr 25, 2023  03:59
+- Last modified: tis apr 25, 2023  04:02
 - Sign: Johan Nylander
 
 ## Workflow repository
@@ -117,7 +117,7 @@ Run freebayes, followed by sorting the VCF
 
 ---
 
-## Filter VCF (Jason Hill)
+## Filter VCF
 
 The VCF file derived from the Freebayes join variant calling run contained
 4,039,951 variant sites. Inspection showed that a near majority of these sites
@@ -152,7 +152,7 @@ variant sites, but those that remain look much more reasonable. This averages
 out to one variant every 550bp, which seems somewhat low(?). We’ll use this file
 going forward.
 
-## Clustering of samples and search for structure (Jason Hill)
+## Clustering of samples and search for structure
 
 Infile `sample-population.tsv`:
 
@@ -284,5 +284,5 @@ snpgdsClose(snps_MAC1.gds)
 ## Ackowledgements
 
 Thanks to Jason Hill [NBIS.se](https://nbis.se/about/staff/jason-hill/) for
-advice on analyses.
+advice and support with analyses.
 
