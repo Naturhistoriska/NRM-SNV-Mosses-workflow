@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: tis apr 25, 2023  03:52
+- Last modified: tis apr 25, 2023  03:59
 - Sign: Johan Nylander
 
 ## Workflow repository
@@ -14,10 +14,10 @@ All analyses was run on the Linux operating system (Ubuntu 20.04, bash v.5.0.17)
 Specific software used (with versions):
 
 - `R` 4.3.0
-- R library `SNPRelate`
+- R library `SNPRelate` 1.33.2
 - R library `ape` 5.7
-- R library `gdsfmt`
-- R library `ggtree`
+- R library `gdsfmt` 1.35.9
+- R library `ggtree` 3.7.2
 - R library `tidyverse` 2.0.0
 - `bcftools` 1.10.2
 - `bwa` 0.7.17
@@ -63,7 +63,7 @@ Eager parameters (different from default) in file `nf-params.json`:
         "fasta_index": "reference/ref.fasta.fai",
         "skip_damage_calculation": true,
         "mergedonly": true,
-        "mapper": "bwamem",
+        "mapper": "bwamem"
     }
 
 Start eager pipeline
