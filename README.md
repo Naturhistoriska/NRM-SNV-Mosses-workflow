@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: tis apr 25, 2023  04:02
+- Last modified: tis apr 25, 2023  08:03
 - Sign: Johan Nylander
 
 ## Workflow repository
@@ -126,144 +126,58 @@ have been included by freebayes for some reason even though none of the samples
 carried the variant indel. Some basic filtering of the VCF produced a more
 reasonable set.
 
+Require genotype quality > 20 and depth > 20. (The depth filter was redundant
+since only sites with depth > 30 were supplied anyway.)
+
     $ vcftools --gzvcf freebayes_gvcf_sorted.vcf.gz \
-      --minDP 20 --minQ 20 --recode-INFO-all --out filtered_GQ20_DP20
+      --minDP 20 --minQ 20 \
+      --recode --recode-INFO-all \
+      --out filtered_GQ20_DP20
 
-Require genotype quality > 20 and depth > 20. The depth filter was redundant
-since only sites with depth > 30 were supplied anyway.
+"After filtering, kept 1622293 out of a possible 4039951 Sites."
 
-    $ vcftools --vcf filtered_GQ20_DP20.vcf --remove-indels \
-      --recode --recode-INFO-all --out output_snps-only.vcf
+Count after removing indels
 
-How many SNPs? After filtering, kept 797,981 out of a possible 1,501,403 Sites
+    $ vcftools --vcf filtered_GQ20_DP20.recode.vcf \
+      --remove-indels \
+      --recode --recode-INFO-all \
+      --out output_snps-only
 
-    $ vcftools --vcf filtered_GQ20_DP20.vcf --keep-only-indels \
-      --recode --recode-INFO-all --out output_indels-only.vcf
+"After filtering, kept 860786 out of a possible 1622293 Sites"
 
-How many indels? After filtering, kept 703,422 out of a possible 1,501,403 Sites
+Count after removing SNPs
 
-    $ vcftools --vcf filtered_GQ20_DP20.vcf --recode \
-      --recode-INFO-all --mac 1 --out output_all.MAC1.vcf
+    $ vcftools --vcf filtered_GQ20_DP20.recode.vcf \
+      --keep-only-indels \
+      --recode --recode-INFO-all \
+      --out output_indels-only
+
+"After filtering, kept 761507 out of a possible 1622293 Sites"
 
 We'll use both SNPs and indels for now, but require that at least one sample
-actually has the alternate allele. After filtering, kept 398,100 out of a
-possible 1,501,403 Sites. There was a very large reduction in the number of
-variant sites, but those that remain look much more reasonable. This averages
-out to one variant every 550bp, which seems somewhat low(?). We’ll use this file
-going forward.
+actually has the alternate allele.
+
+    $ vcftools --vcf filtered_GQ20_DP20.recode.vcf \
+      --mac 1 \
+      --recode --recode-INFO-all \
+      --out output_all.MAC1
+
+"After filtering, kept 15293 out of a possible 1622293 Sites"
+
+There was a very large reduction in the number of variant sites, but those that
+remain look much more reasonable. This averages out to one variant every 550bp,
+which seems somewhat low(?). We’ll use this file going forward.
+
 
 ## Clustering of samples and search for structure
 
-Infile `sample-population.tsv`:
+Infiles:
 
-    $ cat sample-population.tsv
-    P27213_101_S53_L002	popA
-    P27213_102_S54_L002	popA
-    P27213_103_S55_L002	popA
-    P27213_104_S56_L002	popA
-    P27213_105_S57_L002	popA
-    P27213_106_S58_L002	popA
-    P27213_107_S59_L002	popA
-    P27213_108_S60_L002	popA
-    P27213_109_S61_L002	popA
-    P27213_110_S62_L002	popA
-    P27213_111_S63_L002	popB
-    P27213_112_S64_L002	popB
-    P27213_113_S65_L002	popB
-    P27213_114_S66_L002	popB
-    P27213_115_S67_L002	popB
-    P27213_116_S68_L002	popB
-    P27213_117_S69_L002	popB
-    P27213_118_S70_L002	popB
-    P27213_119_S71_L002	popB
-    P27213_120_S72_L002	popB
-    P27213_121_S73_L002	popC
-    P27213_122_S74_L002	popC
-    P27213_123_S75_L002	popC
-    P27213_124_S76_L002	popC
-    P27213_125_S77_L002	popC
-    P27213_126_S78_L002	popC
-    P27213_127_S79_L002	popC
-    P27213_128_S80_L002	popC
-    P27213_129_S81_L002	popC
-    P27213_130_S82_L002	popC
+1. [`sample-population.tsv`](sample-population.tsv)
+2. `output_all.MAC1.recode.vcf`
 
 Commands in R (see script [scripts/analysis.R](scripts/analysis.R))
 
-```R
-
-library(gdsfmt)
-library(SNPRelate)
-library(tidyverse)
-library(ggtree)
-library(ape)
-
-samples.info <- read_tsv(
-    "sample-population.tsv",
-    col_names = c("sample", "population"))
-
-# VCF to GDS
-snpgdsVCF2GDS(
-    "output_all.MAC1.vcf.recode.vcf",
-    "output_all.MAC1.gds",
-    method = "biallelic.only")
-
-snps_MAC1.gds <- snpgdsOpen("output_all.MAC1.gds")
-
-set.seed(100)
-
-# Hierachical clustering
-snps_MAC1.ibs <- snpgdsHCluster(
-    snpgdsIBS(snps_MAC1.gds,num.thread = 2,
-        autosome.only = FALSE,
-        missing.rate = 0.5,
-        maf = 0.1))
-
-snps_MAC1.rv <- snpgdsCutTree(snps_MAC1.ibs)
-
-p1 <- ggtree(as.phylo(
-    as.hclust(snps_MAC1.rv$dendrogram))) +
-    geom_treescale() +
-    xlim(0, 0.1)
-
-p1 %<+% samples.info +
-    geom_tiplab(aes(fill = factor(population)),
-        color = "black",
-        geom = "label")
-
-# PCA
-snps_MAC1.pca <- snpgdsPCA(
-    snps_MAC1.gds,
-    autosome.only = FALSE,
-    missing.rate = 0.5,
-    maf = 0.1)
-
-snps_MAC1.pop_pca <- data.frame(
-    sample.id = snps_MAC1.pca$sample.id,
-    pop = factor(samples.info$population)[match(snps_MAC1.pca$sample.id,
-        samples.info$sample)],
-            EV1 = snps_MAC1.pca$eigenvect[,1],
-            EV2 = snps_MAC1.pca$eigenvect[,2],
-            stringsAsFactors = FALSE)
-
-plot(snps_MAC1.pop_pca$EV2,
-     snps_MAC1.pop_pca$EV1,
-     col = as.integer(snps_MAC1.pop_pca$pop),
-     xlab = "eigenvector 2",
-     ylab = "eigenvector 1")
-
-legend("right",
-       legend = levels(snps_MAC1.pop_pca$pop),
-       pch = "o",
-       col = 1:4)
-
-plot(snps_MAC1.pca,
-    1:4,
-    col = as.integer(snps_MAC1.pop_pca$pop))
-
-snpgdsClose(snps_MAC1.gds)
-
-```
 
 ## Figures
 
