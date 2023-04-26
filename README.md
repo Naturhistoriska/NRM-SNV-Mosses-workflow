@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: ons apr 26, 2023  01:00
+- Last modified: ons apr 26, 2023  04:44
 - Sign: Johan Nylander
 
 ## Workflow repository
@@ -199,5 +199,5 @@ Commands in R (see script [scripts/analysis.R](scripts/analysis.R))
 ## Ackowledgements
 
 Thanks to Jason Hill [NBIS.se](https://nbis.se/about/staff/jason-hill/) for
-advice and support with analyses.
-
+advice and support with analyses, and Martin Sköld, NRM, for comments on the R
+code.

@@ -1,8 +1,8 @@
 #!/usr/bin/env -S Rscript --vanilla
 
 # Description: Script for PCA and basic clustering of populations
-# By: Jason Hill, modifications by JN
-# Last modified: ons apr 26, 2023  04:40
+# By: Jason Hill, modifications by JN, and M. Sköld
+# Last modified: ons apr 26, 2023  04:44
 
 # Input files
 sampleinfo <- "data/sample-population.tsv"
