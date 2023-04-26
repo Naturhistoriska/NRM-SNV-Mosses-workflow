@@ -1,6 +1,6 @@
 # NRM SNV Mosses workflow
 
-- Last modified: tis apr 25, 2023  08:03
+- Last modified: ons apr 26, 2023  01:00
 - Sign: Johan Nylander
 
 ## Workflow repository
@@ -14,11 +14,11 @@ All analyses was run on the Linux operating system (Ubuntu 20.04, bash v.5.0.17)
 Specific software used (with versions):
 
 - `R` 4.3.0
-- R library `SNPRelate` 1.33.2
-- R library `ape` 5.7
-- R library `gdsfmt` 1.35.9
-- R library `ggtree` 3.7.2
-- R library `tidyverse` 2.0.0
+- R package `SNPRelate` 1.33.2
+- R package `ape` 5.7
+- R package `gdsfmt` 1.35.9
+- R package `ggtree` 3.7.2
+- R package `tidyverse` 2.0.0
 - `bcftools` 1.10.2
 - `bwa` 0.7.17
 - `freebayes` 1.3.6
@@ -173,11 +173,12 @@ which seems somewhat low(?). We’ll use this file going forward.
 
 Infiles:
 
-1. [`sample-population.tsv`](sample-population.tsv)
+1. [`sample-population.tsv`](data/sample-population.tsv)
 2. `output_all.MAC1.recode.vcf`
 
 Commands in R (see script [scripts/analysis.R](scripts/analysis.R))
 
+    $ ./scripts/analysis.R
 
 ## Figures
 
@@ -187,11 +188,11 @@ Commands in R (see script [scripts/analysis.R](scripts/analysis.R))
 
 ---
 
-![PCA 1, 2](img/pca12.png)
+![PCA 1, 2](img/pca_12.png)
 
 ---
 
-![PCA all](img/pcaall.png)
+![PCA all](img/pca_all.png)
 
 ---
 

@@ -1,30 +1,42 @@
-# Description: Script for PCA and basic clustering of populations
-# By: Jason Hill
-# Version: tis 25 apr 2023 15:47:34
-#
-# Input:
-#   - sample-population.tsv
-#   - output_all.MAC1.vcf.recode.vcf
+#!/usr/bin/env -S Rscript --vanilla
 
+# Description: Script for PCA and basic clustering of populations
+# By: Jason Hill, modifications by JN
+# Last modified: ons apr 26, 2023  12:58
+
+# Input files
+sampleinfo <- "data/sample-population.tsv"
+recodevcf <- "data/output_all.MAC1.recode.vcf"
+
+# Output files:
+treeplot <- "img/clustering.png"
+pcaplot1 <- "img/pca_12.png"
+pcaplot2 <- "img/pca_all.png"
+
+# Settings
+mycols <- c("red", "darkgreen", "blue")
+gdsfile <- "output_all.MAC1.recode.gds"
+set.seed(100)
+
+# Packages
 library(gdsfmt)
 library(SNPRelate)
 library(tidyverse)
 library(ggtree)
 library(ape)
 
+# Read sample info
 samples.info <- read_tsv(
-    "sample-population.tsv",
+    sampleinfo,
     col_names = c("sample", "population"))
 
 # VCF to GDS
 snpgdsVCF2GDS(
-    "output_all.MAC1.vcf.recode.vcf",
-    "output_all.MAC1.gds",
+    recodevcf,
+    gdsfile,
     method = "biallelic.only")
 
-snps_MAC1.gds <- snpgdsOpen("output_all.MAC1.gds")
-
-set.seed(100)
+snps_MAC1.gds <- snpgdsOpen(gdsfile)
 
 # Hierachical clustering
 snps_MAC1.ibs <- snpgdsHCluster(
@@ -35,15 +47,19 @@ snps_MAC1.ibs <- snpgdsHCluster(
 
 snps_MAC1.rv <- snpgdsCutTree(snps_MAC1.ibs)
 
-p1 <- ggtree(as.phylo(
-    as.hclust(snps_MAC1.rv$dendrogram))) +
-    geom_treescale() +
-    xlim(0, 0.1)
+tree <- ggtree(as.phylo(as.hclust(snps_MAC1.rv$dendrogram))) +
+      geom_treescale() +
+      xlim(0, 0.1)
 
-p1 %<+% samples.info +
+png(treeplot)
+
+tree %<+% samples.info +
     geom_tiplab(aes(fill = factor(population)),
         color = "black",
-        geom = "label")
+        geom = "label",
+        size = 2)
+
+dev.off()
 
 # PCA
 snps_MAC1.pca <- snpgdsPCA(
@@ -60,20 +76,31 @@ snps_MAC1.pop_pca <- data.frame(
             EV2 = snps_MAC1.pca$eigenvect[,2],
             stringsAsFactors = FALSE)
 
+png(pcaplot1)
+
 plot(snps_MAC1.pop_pca$EV2,
      snps_MAC1.pop_pca$EV1,
-     col = as.integer(snps_MAC1.pop_pca$pop),
+     col = mycols[as.integer(snps_MAC1.pop_pca$pop)],
      xlab = "eigenvector 2",
      ylab = "eigenvector 1")
 
-legend("right",
+legend("topright",
        legend = levels(snps_MAC1.pop_pca$pop),
        pch = "o",
-       col = 1:4)
+       col = mycols,
+       title = "Population")
+
+dev.off()
+
+png(pcaplot2)
 
 plot(snps_MAC1.pca,
     1:4,
     col = as.integer(snps_MAC1.pop_pca$pop))
 
+dev.off()
+
 snpgdsClose(snps_MAC1.gds)
+
+unlink(gdsfile)
 
