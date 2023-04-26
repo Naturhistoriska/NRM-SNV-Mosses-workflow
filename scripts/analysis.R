@@ -2,7 +2,7 @@
 
 # Description: Script for PCA and basic clustering of populations
 # By: Jason Hill, modifications by JN
-# Last modified: ons apr 26, 2023  12:58
+# Last modified: ons apr 26, 2023  04:40
 
 # Input files
 sampleinfo <- "data/sample-population.tsv"
@@ -14,7 +14,7 @@ pcaplot1 <- "img/pca_12.png"
 pcaplot2 <- "img/pca_all.png"
 
 # Settings
-mycols <- c("red", "darkgreen", "blue")
+mycols <- c("black", "red", "darkgreen")
 gdsfile <- "output_all.MAC1.recode.gds"
 set.seed(100)
 
@@ -24,6 +24,7 @@ library(SNPRelate)
 library(tidyverse)
 library(ggtree)
 library(ape)
+library(ggfortify)
 
 # Read sample info
 samples.info <- read_tsv(
@@ -55,9 +56,10 @@ png(treeplot)
 
 tree %<+% samples.info +
     geom_tiplab(aes(fill = factor(population)),
-        color = "black",
+        color = "white",
         geom = "label",
-        size = 2)
+        size = 2) +
+    scale_fill_manual(values = mycols)
 
 dev.off()
 
@@ -81,6 +83,8 @@ png(pcaplot1)
 plot(snps_MAC1.pop_pca$EV2,
      snps_MAC1.pop_pca$EV1,
      col = mycols[as.integer(snps_MAC1.pop_pca$pop)],
+     cex = 2,
+     lwd = 2,
      xlab = "eigenvector 2",
      ylab = "eigenvector 1")
 
@@ -95,8 +99,10 @@ dev.off()
 png(pcaplot2)
 
 plot(snps_MAC1.pca,
-    1:4,
-    col = as.integer(snps_MAC1.pop_pca$pop))
+     1:4,
+     col = as.integer(snps_MAC1.pop_pca$pop),
+     cex = 1.5
+)
 
 dev.off()
 
